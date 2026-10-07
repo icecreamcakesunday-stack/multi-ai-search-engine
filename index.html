@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Multi AI Search Engine</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 40px; background: #f7f7f7; }
+      .container { max-width: 900px; margin: auto; }
+      .search-box { display: flex; gap: 10px; margin-bottom: 20px; }
+      input { flex: 1; padding: 12px; font-size: 16px; }
+      button { padding: 12px 18px; font-size: 16px; cursor: pointer; }
+      .result { background: white; border-radius: 10px; padding: 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+      .result h3 { margin: 0 0 8px; }
+      .result .meta { color: #666; font-size: 12px; margin-bottom: 8px; }
+      .result a { color: #0057d8; text-decoration: none; }
+      .result a:hover { text-decoration: underline; }
+      #status { margin-bottom: 20px; color: #444; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Multi AI Search Engine</h1>
+      <div class="search-box">
+        <input id="query" type="text" placeholder="Search for anything..." />
+        <button onclick="search()">Search</button>
+      </div>
+      <div id="status"></div>
+      <div id="results"></div>
+    </div>
+
+    <script>
+      async function search() {
+        const query = document.getElementById('query').value.trim();
+        const status = document.getElementById('status');
+        const resultsEl = document.getElementById('results');
+
+        if (!query) {
+          status.textContent = 'Please enter a search query.';
+          return;
+        }
+
+        status.textContent = 'Searching...';
+        resultsEl.innerHTML = '';
+
+        try {
+          const res = await fetch('http://localhost:8000/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query })
+          });
+
+          const data = await res.json();
+          if (!Array.isArray(data)) {
+            throw new Error('Unexpected response');
+          }
+
+          if (!data.length) {
+            status.textContent = 'No results found.';
+            return;
+          }
+
+          status.textContent = `Found ${data.length} results.`;
+          resultsEl.innerHTML = data.map(item => `
+            <div class="result">
+              <h3><a href="${item.url}" target="_blank">${item.title}</a></h3>
+              <div class="meta">${item.source}</div>
+              <div>${item.snippet || 'No snippet available.'}</div>
+            </div>
+          `).join('');
+        } catch (err) {
+          status.textContent = 'Error connecting to the backend. Make sure the server is running on port 8000.';
+        }
+      }
+    </script>
+  </body>
+</html>
